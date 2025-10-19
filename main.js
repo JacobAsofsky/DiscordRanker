@@ -1,5 +1,4 @@
 require('dotenv').config();
-const app_name = "discord-ranker";
 
 const g_gameMap = new Map();
 const { Client, GatewayIntentBits } = require('discord.js');
@@ -23,7 +22,8 @@ client.once('ready', () => {
 client.on('messageCreate', message => {
   // Ignore messages from the bot itself
   if (message.author.bot) return;
-  if(message.channel.name != app_name) return;
+  //to-do decide if I want to limit to specific channel
+  //if(message.channel.name != app_name) return;
   processMessage(message);
 });
 

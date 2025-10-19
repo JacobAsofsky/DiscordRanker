@@ -32,17 +32,13 @@ class GameInstance
     constructor(guild)
     {
         this.guild = guild;
-        let mychannel = guild.channels.cache.find(c => c.name === app_name);
-        this.channel = mychannel;
-        this.players = [];
     }
     configure(discordClient) {
         client = discordClient;
     }
 
-    isInstanceValid()
-    {
-        return (this.channel && this.guild);
+    isInstanceValid() {
+        return this.guild != null;
     }
 
     processMessage(message)
@@ -113,7 +109,7 @@ class GameInstance
     async getRankings(message, offset = 1) {
          const rows = await this.getLeaderboard(message.guild.id, 10, 10 * (offset-1)); // top 10
         if (!rows.length) return message.reply('No scores yet.');
-        let totalPages = Math.floor(rows.length / 10);
+        let totalPages = Math.ceil(rows.length / 10);
         const lines = rows.map((r, i) =>
             `${this.getRankingTitle(i)} **${r.USERNAME}**: ${r.POINTS}`
         );
