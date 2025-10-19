@@ -1,0 +1,4 @@
+/node_modules
+points.db
+points.db-shm
+points.db-wal
