@@ -2,3 +2,5 @@
 points.db
 points.db-shm
 points.db-wal
+process.env
+.env

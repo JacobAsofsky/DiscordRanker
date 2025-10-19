@@ -146,7 +146,7 @@ async getPoints(userId, serverId) {
 async changePoints(userId, username, serverId, delta = 0) {
 
   let points = await this.getPoints(userId, serverId);
-  if(delta < -points) delta = -points;
+  //if(delta < -points) delta = -points;
 
   db.prepare(`
     INSERT INTO points (USER_ID, USERNAME, SERVER, POINTS, INTERACTIONS)

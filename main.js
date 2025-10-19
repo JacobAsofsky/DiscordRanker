@@ -1,10 +1,11 @@
+require('dotenv').config();
 const app_name = "discord-ranker";
 
 const g_gameMap = new Map();
 const { Client, GatewayIntentBits } = require('discord.js');
 const Game = require('./game.js');
 
-let bot_token = "MTQyOTI4NDQ3MjUzMjExMTQ5Mw.GMxCNI.av4rSrbytTw6KLroPAQVBknkoGc-r8m79ictpo";
+let bot_token = process.env.DISCORD_TOKEN;
 
 // Create a new client instance
 const client = new Client({
