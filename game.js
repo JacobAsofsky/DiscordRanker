@@ -68,6 +68,7 @@ class GameInstance
             this.getRankings(message, offset);
         }
     }
+
     async SetUserPoints(message, userID, points = 10) {
 
         var num = Number(points);
@@ -100,7 +101,6 @@ class GameInstance
     }
 
     async GiveUserPoints(message, userID, points = 10, addOrSubtract = false) {
-
         var num = Number(points);
         if (isNaN(num)) {
             message.reply("*Invalid points amount!*");
@@ -110,7 +110,6 @@ class GameInstance
             message.reply("*Points must be greater than zero!*");
             return;
         }
-
         const onlyNumbers = userID.replace(/\D/g, '')
         let member = null;
         try {
@@ -120,6 +119,12 @@ class GameInstance
             message.reply("*User not found in this server!*");
             return;
         }
+
+        if(member.user.id == message.author.id) {
+            message.reply("*You cannot give or take points from yourself!*");
+            return;
+        }
+        
         if(addOrSubtract) num *= -1;
         let pointStr = await this.adjustPlayerPoints(message, onlyNumbers, member.user.username, num);
 
