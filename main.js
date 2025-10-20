@@ -54,7 +54,7 @@ function GetActiveServer(message)
 
 function processMessage(message)
 {
-    console.log(message.content);
+  //console.log(message.content);
   if (!message.guild)
     {
         //todo handle DM

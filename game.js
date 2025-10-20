@@ -56,11 +56,47 @@ class GameInstance
                 message.reply("*Incorrect usage. " + command + " <@user> <points>*");
             }
         }
+        else if(command == "!setpoints" && parts.length == 3) {
+            {
+                this.SetUserPoints(message, parts[1], parts[2]);
+            }
+        }
+
         else if(command == "!rankings" || command == "!leaderboard") {
             let offset = parts[1];
             if(!offset) offset = 1;
             this.getRankings(message, offset);
         }
+    }
+    async SetUserPoints(message, userID, points = 10) {
+
+        var num = Number(points);
+        if (isNaN(num)) {
+            message.reply("*Invalid points amount!*");
+            return;
+        }
+        else if(num <= 0) {
+            message.reply("*Points must be greater than zero!*");
+            return;
+        }
+        else if(Math.abs(num) > 10000) {
+            message.reply("*Too large a num!*");
+            return;
+        }
+
+        const onlyNumbers = userID.replace(/\D/g, '')
+        let member = null;
+        try {
+            member = await message.guild.members.fetch(onlyNumbers);
+        } 
+        catch (error) {
+            message.reply("*User not found in this server!*");
+            return;
+        }
+
+        await this.setPoints(onlyNumbers, member.user.username, message.guild.id, num);
+        let outStr = "setting **"  + member.user.username + "** to " + points + "!";
+        message.reply(outStr);
     }
 
     async GiveUserPoints(message, userID, points = 10, addOrSubtract = false) {
@@ -145,10 +181,6 @@ async getPoints(userId, serverId) {
 }
 
 async changePoints(userId, username, serverId, delta = 0) {
-
-  let points = await this.getPoints(userId, serverId);
-  //if(delta < -points) delta = -points;
-
   db.prepare(`
     INSERT INTO points (USER_ID, USERNAME, SERVER, POINTS, INTERACTIONS)
     VALUES (?, ?, ?, ?, 1)
@@ -156,6 +188,16 @@ async changePoints(userId, username, serverId, delta = 0) {
       POINTS = POINTS + excluded.POINTS,
       INTERACTIONS = INTERACTIONS + 1
   `).run(userId, username, serverId, delta);
+}
+
+async setPoints(userId, username, serverId, points) {
+  db.prepare(`
+    INSERT INTO points (USER_ID, USERNAME, SERVER, POINTS, INTERACTIONS)
+    VALUES (?, ?, ?, ?, 0)
+    ON CONFLICT(USER_ID, SERVER) DO UPDATE SET
+      USERNAME = excluded.USERNAME,
+      POINTS   = excluded.POINTS
+  `).run(userId, username, serverId, points);
 }
 
 async getLeaderboard(serverId, limit = 10, offset = 0) {
