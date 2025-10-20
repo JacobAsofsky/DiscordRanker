@@ -96,6 +96,11 @@ class GameInstance
     }
 
     async adjustPlayerPoints(message, playerID, username, points) {
+        points = Math.round(points);
+        if(Math.abs(points) > 10000) {
+            message.reply("*Point adjustment too large! Clamping to 10000*");
+            points = Math.sign(points) * 10000;
+        }
         console.log(`Adjusting points for player ${playerID} by ${points}`);
         let serverId = message.guild.id;
         let oldPoints = await this.getPoints(playerID, serverId);
