@@ -174,7 +174,7 @@ class GameInstance
         if (position === 0) return '🥇';
         if (position === 1) return '🥈';
         if (position === 2) return '🥉';
-        return `${position}.`;
+        return `${position+1}.`;
     }
 
 //SQL METHODS==================================================
