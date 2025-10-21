@@ -202,6 +202,7 @@ async changePoints(userId, username, serverId, delta = 0) {
     ON CONFLICT(USER_ID, SERVER) DO UPDATE SET
       POINTS = POINTS + excluded.POINTS,
       INTERACTIONS = INTERACTIONS + 1
+      USERNAME = excluded.USERNAME
   `).run(userId, username, serverId, delta);
 }
 
