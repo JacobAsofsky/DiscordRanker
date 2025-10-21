@@ -67,6 +67,9 @@ class GameInstance
             if(!offset) offset = 1;
             this.getRankings(message, offset);
         }
+        else if(command == "!balance" || command == "!points") {
+            this.getBalance(message);
+        }
     }
 
     async SetUserPoints(message, userID, points = 10) {
@@ -110,7 +113,7 @@ class GameInstance
             message.reply("*Points must be greater than zero!*");
             return;
         }
-        const onlyNumbers = userID.replace(/\D/g, '')
+        var onlyNumbers = getRawID(userID);
         let member = null;
         try {
             member = await message.guild.members.fetch(onlyNumbers);
@@ -151,7 +154,6 @@ class GameInstance
         return (`**${oldPoints} -> ${newPoints}**`);
     }
 
-
     async getRankings(message, offset = 1) {
          const rows = await this.getLeaderboard(message.guild.id, 10, 10 * (offset-1)); // top 10
         if (!rows.length) return message.reply('No scores yet.');
@@ -168,13 +170,21 @@ class GameInstance
     });
     }
 
-
+    async getBalance(message) {   
+    const row = db.prepare(`
+        SELECT POINTS
+        FROM points
+        WHERE USER_ID = ? AND SERVER = ?
+    `).get(getRawID(message.author.id), message.guild.id);
+    const points = row ? row.POINTS : 0;
+    await message.reply(`you currently have **${points} points.**`);
+    }
 
     getRankingTitle(position) {
-        if (position === 0) return '🥇';
-        if (position === 1) return '🥈';
-        if (position === 2) return '🥉';
-        return `${position+1}.`;
+            if (position === 0) return '🥇';
+            if (position === 1) return '🥈';
+            if (position === 2) return '🥉';
+            return `${position+1}.`;
     }
 
 //SQL METHODS==================================================
@@ -223,6 +233,9 @@ async getLeaderboard(serverId, limit = 10, offset = 0) {
 }
 
 
+function getRawID(userID) {
+    return userID.replace(/\D/g, '')
+}
 
 
 
