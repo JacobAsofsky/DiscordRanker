@@ -10,7 +10,7 @@ db.exec(`
 CREATE TABLE IF NOT EXISTS points (
   USER_ID INTEGER NOT NULL,
   SERVER  TEXT NOT NULL,
-  USERNAME TEXT,
+  USERNAME TEXT NOT NULL,
   POINTS  INTEGER NOT NULL DEFAULT 0,
   INTERACTIONS INTEGER NOT NULL DEFAULT 0,
   PRIMARY KEY (USER_ID, SERVER)
@@ -129,11 +129,13 @@ class GameInstance
         }
         
         if(addOrSubtract) num *= -1;
-        let pointStr = await this.adjustPlayerPoints(message, onlyNumbers, member.user.globalName , num);
+        var USERNAME = member.user.globalName;
+        if(!USERNAME) USERNAME = member.user.username;
+        let pointStr = await this.adjustPlayerPoints(message, onlyNumbers, USERNAME , num);
 
-        let outStr = "giving **" + member.user.globalName  + "** " + points + " points!";
+        let outStr = "giving **" + USERNAME  + "** " + points + " points!";
         if(addOrSubtract) {
-            outStr = "taking " + points + " points from **"  + member.user.globalName  + "**!";
+            outStr = "taking " + points + " points from **"  + USERNAME  + "**!";
         }
         outStr += "   "  + pointStr;
         message.reply(outStr);
