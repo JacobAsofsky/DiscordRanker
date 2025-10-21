@@ -10,7 +10,7 @@ db.exec(`
 CREATE TABLE IF NOT EXISTS points (
   USER_ID INTEGER NOT NULL,
   SERVER  TEXT NOT NULL,
-  USERNAME TEXT NOT NULL,
+  USERNAME TEXT,
   POINTS  INTEGER NOT NULL DEFAULT 0,
   INTERACTIONS INTEGER NOT NULL DEFAULT 0,
   PRIMARY KEY (USER_ID, SERVER)
@@ -201,7 +201,7 @@ async changePoints(userId, username, serverId, delta = 0) {
     VALUES (?, ?, ?, ?, 1)
     ON CONFLICT(USER_ID, SERVER) DO UPDATE SET
       POINTS = POINTS + excluded.POINTS,
-      INTERACTIONS = INTERACTIONS + 1
+      INTERACTIONS = INTERACTIONS + 1,
       USERNAME = excluded.USERNAME
   `).run(userId, username, serverId, delta);
 }
