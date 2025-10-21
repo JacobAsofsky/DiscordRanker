@@ -129,11 +129,11 @@ class GameInstance
         }
         
         if(addOrSubtract) num *= -1;
-        let pointStr = await this.adjustPlayerPoints(message, onlyNumbers, member.user.username, num);
+        let pointStr = await this.adjustPlayerPoints(message, onlyNumbers, member.user.globalName , num);
 
-        let outStr = "giving **" + member.user.username + "** " + points + " points!";
+        let outStr = "giving **" + member.user.globalName  + "** " + points + " points!";
         if(addOrSubtract) {
-            outStr = "taking " + points + " points from **"  + member.user.username + "**!";
+            outStr = "taking " + points + " points from **"  + member.user.globalName  + "**!";
         }
         outStr += "   "  + pointStr;
         message.reply(outStr);
