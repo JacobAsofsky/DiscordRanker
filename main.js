@@ -30,6 +30,13 @@ client.on('interactionCreate', async interaction => {
   if(!activeServer.isInstanceValid()) {
     return;
   } 
+  if(interaction.channel.name.includes('dev') && (!process.env.DEV || process.env.DEV != "1")) {
+    return;
+  }
+  if(!interaction.channel.name.includes('dev') && process.env.DEV && process.env.DEV == "1") {
+    return;
+  }
+  
   activeServer.processCommand(interaction);
 });
 
@@ -55,4 +62,15 @@ function tick()
 function GetActiveServer(guildID)
 {
     return g_gameMap.get(guildID);
+}
+
+client.on('messageCreate', message => {
+  if (message.author.bot) return;
+  processMessage(message);
+})
+
+function processMessage(message) {
+  if(message.content.startsWith('!give') || message.content.startsWith('!take') || message.content.startsWith('!balance') || message.content.startsWith('!rankings') || message.content.startsWith('!setpoints')) {
+    message.reply("*Deprecated. Please use the slash commands! (/)*");
+  }
 }
