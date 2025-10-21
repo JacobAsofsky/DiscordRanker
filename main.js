@@ -18,13 +18,19 @@ client.once('ready', () => {
   setInterval(tick, 1000);
 });
 
-// Listen for messages
-client.on('messageCreate', message => {
-  // Ignore messages from the bot itself
-  if (message.author.bot) return;
-  //to-do decide if I want to limit to specific channel
-  //if(message.channel.name != app_name) return;
-  processMessage(message);
+//listen for slash commands
+client.on('interactionCreate', async interaction => {
+  if (!interaction.isCommand()) return;
+
+ let activeServer = GetActiveServer(interaction.guildId);
+  if(!activeServer) {
+        console.log("Server not found!");
+        return;
+    } 
+  if(!activeServer.isInstanceValid()) {
+    return;
+  } 
+  activeServer.processCommand(interaction);
 });
 
 // Log in to Discord with your bot token
@@ -41,44 +47,12 @@ function onStart()
     
 }
 
-
 function tick()
 {
   
 }
 
-function GetActiveServer(message)
+function GetActiveServer(guildID)
 {
-    return g_gameMap.get(message.guild.id);
-}
-
-function processMessage(message)
-{
-  //console.log(message.content);
-  if (!message.guild)
-    {
-        //todo handle DM
-        console.log("DM? Server not found!");
-        return;
-    } 
-  let activeServer = GetActiveServer(message);
-  if(!activeServer)
-    {
-        console.log("Server not found!");
-        return;
-    } 
-  if(!activeServer.isInstanceValid())
-  {
-    return;
-  }
-
-  if(message.channel.name.includes('dev') && (!process.env.DEV || process.env.DEV != "1")) {
-    return;
-  }
-
-  if(!message.channel.name.includes('dev') && process.env.DEV && process.env.DEV == "1") {
-    return;
-  }
-
-  activeServer.processMessage(message);
+    return g_gameMap.get(guildID);
 }

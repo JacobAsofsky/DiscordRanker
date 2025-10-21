@@ -17,16 +17,6 @@ CREATE TABLE IF NOT EXISTS points (
 );
 `);
 
-
-/*const mysql = require('mysql');
-
-const connection = mysql.createConnection({
-  host: '65.60.38.74',       
-  user: 'jacobaso_discord',
-  password: '?rpp*d1_j%7muUu]',
-  database: 'jacobaso_discord_bots'
-});*/
-
 class GameInstance
 {
     constructor(guild)
@@ -41,145 +31,115 @@ class GameInstance
         return this.guild != null;
     }
 
-    processMessage(message)
-    {
-    const parts = message.content.trim().split(/\s+/);
-    const command = parts[0].toLowerCase();
+    processCommand(interaction) {
+    let command = interaction.commandName;
+    if(command === 'rankings') {
+        this.handleRankings(interaction);
+    }
+    else if(command === 'balance') {
+        this.handleBalance(interaction);
+    }
+    else if(command === 'give') {
+        this.handleGiveOrTake(interaction, false);
+    }
+    else if(command === 'take') {
+        this.handleGiveOrTake(interaction, true);
+    }
+    else if(command === 'setpoints') {
+        this.handleSetPoints(interaction);
+    }
+}
 
-        if(command == "!give" || command == "!take") {
-            if(parts.length == 3)
-            {
-                let addOrSubtract = (command == "!take");
-                this.GiveUserPoints(message, parts[1], parts[2],addOrSubtract);
-            }
-            else {
-                message.reply("*Incorrect usage. " + command + " <@user> <points>*");
-            }
-        }
-        else if(command == "!setpoints" && parts.length == 3) {
-            {
-                this.SetUserPoints(message, parts[1], parts[2]);
-            }
-        }
-
-        else if(command == "!rankings" || command == "!leaderboard") {
-            let offset = parts[1];
-            if(!offset) offset = 1;
-            this.getRankings(message, offset);
-        }
-        else if(command == "!balance" || command == "!points") {
-            this.getBalance(message);
-        }
+    async handleRankings(interaction) {
+        let offset = 1;
+        const rows = await this.getLeaderboard(interaction.guildId, 10, 10 * (offset-1)); // top 10
+        if (!rows.length) return interaction.reply('No scores yet.');
+        let totalPages = Math.ceil(rows.length / 10);
+        const lines = rows.map((r, i) =>`${this.getRankingTitle(i)} **${r.USERNAME}**: ${r.POINTS}`);
+        await interaction.reply({
+            embeds: [{
+            title: `🏆 LEADERBOARD 🏆 (Page ${offset}/${totalPages})`,
+            description: lines.join('\n'),
+            color: 0xF1C40F
+        }]
+    });
     }
 
-    async SetUserPoints(message, userID, points = 10) {
-
-        var num = Number(points);
-        if (isNaN(num)) {
-            message.reply("*Invalid points amount!*");
-            return;
-        }
-        else if(num <= 0) {
-            message.reply("*Points must be greater than zero!*");
-            return;
-        }
-        else if(Math.abs(num) > 10000) {
-            message.reply("*Too large a num!*");
-            return;
-        }
-
-        const onlyNumbers = userID.replace(/\D/g, '')
-        let member = null;
-        try {
-            member = await message.guild.members.fetch(onlyNumbers);
-        } 
-        catch (error) {
-            message.reply("*User not found in this server!*");
-            return;
-        }
-
-        await this.setPoints(onlyNumbers, member.user.username, message.guild.id, num);
-        let outStr = "setting **"  + member.user.username + "** to " + points + "!";
-        message.reply(outStr);
+    async handleBalance(interaction) {   
+    const row = db.prepare(`
+        SELECT POINTS
+        FROM points
+        WHERE USER_ID = ? AND SERVER = ?
+    `).get(getRawID(interaction.user.id), interaction.guildId);
+    const points = row ? row.POINTS : 0;
+    await interaction.reply(`you currently have **${points} points.**`);
     }
 
-    async GiveUserPoints(message, userID, points = 10, addOrSubtract = false) {
-        var num = Number(points);
-        if (isNaN(num)) {
-            message.reply("*Invalid points amount!*");
+    async handleGiveOrTake(interaction, giveOrTake) {
+        const userOption = interaction.options.getUser('user');
+        const amountOption = interaction.options.getInteger('amount');
+        if(!userOption || !amountOption) {
+            await interaction.reply("*Invalid command inputs!*");
             return;
         }
-        else if(num <= 0) {
-            message.reply("*Points must be greater than zero!*");
+        let points = amountOption;
+        if(points <= 0) {
+            await interaction.reply("*Points must be greater than zero!*");
             return;
         }
-        var onlyNumbers = getRawID(userID);
-        let member = null;
-        try {
-            member = await message.guild.members.fetch(onlyNumbers);
-        } 
-        catch (error) {
-            message.reply("*User not found in this server!*");
+        let targetUserID = getRawID(userOption.id);
+        if(targetUserID == interaction.user.id) {
+            await interaction.reply("*You cannot give or take points from yourself!*");
             return;
         }
-
-        if(member.user.id == message.author.id) {
-            message.reply("*You cannot give or take points from yourself!*");
-            return;
-        }
-        
-        if(addOrSubtract) num *= -1;
-        var USERNAME = member.user.globalName;
-        if(!USERNAME) USERNAME = member.user.username;
-        let pointStr = await this.adjustPlayerPoints(message, onlyNumbers, USERNAME , num);
-
-        let outStr = "giving **" + USERNAME  + "** " + points + " points!";
-        if(addOrSubtract) {
-            outStr = "taking " + points + " points from **"  + USERNAME  + "**!";
-        }
+        var USERNAME = userOption.globalName;
+        if(!USERNAME) USERNAME = userOption.username;
+        if(giveOrTake) points *= -1;
+        let pointStr = await this.changePlayerPoints(interaction, targetUserID, USERNAME , points);
+        let outStr = "giving **" + USERNAME  + "** " + amountOption + " points!";
+        if(giveOrTake) outStr = "taking " + amountOption + " points from **"  + USERNAME  + "**!";
         outStr += "   "  + pointStr;
-        message.reply(outStr);
+        await interaction.reply(outStr);
     }
 
-    async adjustPlayerPoints(message, playerID, username, points) {
+    async handleSetPoints(interaction) {
+        let member = interaction.member;
+        let bAuthorized = false;
+        if(member.user.globalName && member.user.globalName.includes("Jacob")) {
+            bAuthorized = true;
+        }
+        if(!bAuthorized) {
+            await interaction.reply("*You are not cool enough to use this command!*");
+            return;
+        }
+        const userOption = interaction.options.getUser('user');
+        const amountOption = interaction.options.getInteger('amount');
+        if(!userOption || !amountOption) {
+            await interaction.reply("*Invalid command inputs!*");
+            return;
+        }
+        let points = amountOption;
+        let targetUserID = getRawID(userOption.id);
+        var USERNAME = userOption.globalName;
+        if(!USERNAME) USERNAME = userOption.username;
+        await this.setPoints(targetUserID, USERNAME, interaction.guildId, points);
+        let outStr = "setting **"  + USERNAME + "** to " + points + "!";
+        interaction.reply(outStr);
+    }
+
+    async changePlayerPoints(interaction, playerID, username, points) {
         points = Math.round(points);
         if(Math.abs(points) > 10000) {
-            message.reply("*Point adjustment too large! Clamping to 10000*");
+            interaction.reply("*Point adjustment too large! Clamping to 10000*");
             points = Math.sign(points) * 10000;
         }
         console.log(`Adjusting points for player ${playerID} by ${points}`);
-        let serverId = message.guild.id;
+        let serverId = interaction.guildId;
         let oldPoints = await this.getPoints(playerID, serverId);
         if(!oldPoints) oldPoints = 0;
         await this.changePoints(playerID, username, serverId, points);
         let newPoints = await this.getPoints(playerID, serverId);
         return (`**${oldPoints} -> ${newPoints}**`);
-    }
-
-    async getRankings(message, offset = 1) {
-         const rows = await this.getLeaderboard(message.guild.id, 10, 10 * (offset-1)); // top 10
-        if (!rows.length) return message.reply('No scores yet.');
-        let totalPages = Math.ceil(rows.length / 10);
-        const lines = rows.map((r, i) =>
-            `${this.getRankingTitle(i)} **${r.USERNAME}**: ${r.POINTS}`
-        );
-    await message.reply({
-        embeds: [{
-        title: `🏆 LEADERBOARD 🏆 (Page ${offset}/${totalPages})`,
-        description: lines.join('\n'),
-        color: 0xF1C40F
-        }]
-    });
-    }
-
-    async getBalance(message) {   
-    const row = db.prepare(`
-        SELECT POINTS
-        FROM points
-        WHERE USER_ID = ? AND SERVER = ?
-    `).get(getRawID(message.author.id), message.guild.id);
-    const points = row ? row.POINTS : 0;
-    await message.reply(`you currently have **${points} points.**`);
     }
 
     getRankingTitle(position) {
