@@ -70,6 +70,12 @@ client.on('messageCreate', message => {
 })
 
 function processMessage(message) {
+  if(interaction.channel.name.includes('dev') && (!process.env.DEV || process.env.DEV != "1")) {
+    return;
+  }
+  if(!interaction.channel.name.includes('dev') && process.env.DEV && process.env.DEV == "1") {
+    return;
+  }
   if(message.content.startsWith('!give') || message.content.startsWith('!take') || message.content.startsWith('!balance') || message.content.startsWith('!rankings') || message.content.startsWith('!setpoints')) {
     message.reply("*Deprecated. Please use the slash commands! (/)*");
   }
