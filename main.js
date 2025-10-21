@@ -76,5 +76,9 @@ function processMessage(message)
     return;
   }
 
+  if(!message.channel.name.includes('dev') && process.env.DEV && process.env.DEV == "1") {
+    return;
+  }
+
   activeServer.processMessage(message);
 }
