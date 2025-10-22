@@ -78,6 +78,7 @@ class GameInstance
     async handleGiveOrTake(interaction, giveOrTake) {
         const userOption = interaction.options.getUser('user');
         const amountOption = interaction.options.getInteger('amount');
+        const reasonOption = interaction.options.getString('reason');
         if(!userOption || !amountOption) {
             await interaction.reply("*Invalid command inputs!*");
             return;
@@ -96,10 +97,21 @@ class GameInstance
         if(!USERNAME) USERNAME = userOption.username;
         if(giveOrTake) points *= -1;
         let pointStr = await this.changePlayerPoints(interaction, targetUserID, USERNAME , points);
-        let outStr = "giving **" + USERNAME  + "** " + amountOption + " points!";
-        if(giveOrTake) outStr = "taking " + amountOption + " points from **"  + USERNAME  + "**!";
+        let outStr = "Giving **" + USERNAME  + "** " + amountOption + " points!";
+        if(giveOrTake) outStr = "Taking " + amountOption + " points from **"  + USERNAME  + "**!";
         outStr += "   "  + pointStr;
-        await interaction.reply(outStr);
+        if(reasonOption) {
+            outStr += `\n*Reason:* **${reasonOption}**`;
+        }
+        //await interaction.reply(outStr);
+        let responseColor = giveOrTake ? 0xff0000 : 0x32a852;
+        await interaction.reply({
+            embeds: [{
+            title: ``,
+            description: outStr,
+            color: responseColor
+        }]
+    });
     }
 
     async handleSetPoints(interaction) {
