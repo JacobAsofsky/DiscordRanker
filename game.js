@@ -56,7 +56,7 @@ class GameInstance
         const rows = await this.getLeaderboard(interaction.guildId, 10, 10 * (offset-1)); // top 10
         if (!rows.length) return interaction.reply('No scores yet.');
         let totalPages = Math.ceil(rows.length / 10);
-        const lines = rows.map((r, i) =>`${this.getRankingTitle(i)} **${r.USERNAME}**: ${r.POINTS}`);
+        const lines = rows.map((r, i) =>`${this.getRankingTitle(i, offset-1)} **${r.USERNAME}**: ${r.POINTS}`);
         await interaction.reply({
             embeds: [{
             title: `🏆 LEADERBOARD 🏆 (Page ${offset})`,
@@ -158,7 +158,8 @@ class GameInstance
         return (`**${oldPoints} -> ${newPoints}**`);
     }
 
-    getRankingTitle(position) {
+    getRankingTitle(position, offset) {
+            position += offset * 10;
             if (position === 0) return '🥇';
             if (position === 1) return '🥈';
             if (position === 2) return '🥉';
