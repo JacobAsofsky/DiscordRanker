@@ -95,6 +95,7 @@ class GameInstance
         }
         var USERNAME = userOption.globalName;
         if(!USERNAME) USERNAME = userOption.username;
+        if(points > 10) points = 10;
         if(giveOrTake) points *= -1;
         let pointStr = await this.changePlayerPoints(interaction, targetUserID, USERNAME , points);
 
