@@ -129,7 +129,7 @@ class GameInstance
         }
         const userOption = interaction.options.getUser('user');
         const amountOption = interaction.options.getInteger('amount');
-        if(!userOption || !amountOption) {
+        if(!userOption) {
             await interaction.reply("*Invalid command inputs!*");
             return;
         }
