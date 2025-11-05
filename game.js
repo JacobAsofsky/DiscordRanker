@@ -141,9 +141,9 @@ class GameInstance
 
     async changePlayerPoints(interaction, playerID, username, points) {
         points = Math.round(points);
-        if(Math.abs(points) > 10000) {
-            interaction.reply("*Point adjustment too large! Clamping to 10000*");
-            points = Math.sign(points) * 10000;
+        if(Math.abs(points) > 10) {
+            interaction.reply("*Point adjustment too large! Clamping to 10*");
+            points = Math.sign(points) * 10;
         }
         console.log(`Adjusting points for player ${playerID} by ${points}`);
         let serverId = interaction.guildId;
@@ -190,7 +190,7 @@ async setPoints(userId, username, serverId, points) {
   `).run(userId, username, serverId, points);
 }
 
-async getLeaderboard(serverId, limit = 10, offset = 0) {
+async getLeaderboard(serverId, limit = 99, offset = 0) {
   return db.prepare(`
     SELECT USERNAME, POINTS, INTERACTIONS
     FROM points
@@ -200,10 +200,6 @@ async getLeaderboard(serverId, limit = 10, offset = 0) {
   `).all(serverId, limit, offset);
 }
 //SQL METHODS==================================================
-
-
-
-
 
 }
 
