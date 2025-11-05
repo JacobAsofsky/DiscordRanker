@@ -77,7 +77,7 @@ class GameInstance
 
     async handleGiveOrTake(interaction, giveOrTake) {
         const userOption = interaction.options.getUser('user');
-        const amountOption = interaction.options.getInteger('amount');
+        var amountOption = interaction.options.getInteger('amount');
         const reasonOption = interaction.options.getString('reason');
         if(!userOption || !amountOption) {
             await interaction.reply("*Invalid command inputs!*");
@@ -97,6 +97,7 @@ class GameInstance
         if(!USERNAME) USERNAME = userOption.username;
         if(giveOrTake) points *= -1;
         let pointStr = await this.changePlayerPoints(interaction, targetUserID, USERNAME , points);
+
         if(amountOption > 10) amountOption = 10;
         let outStr = "Giving **" + USERNAME  + "** " + amountOption + " points!";
         if(giveOrTake) outStr = "Taking " + amountOption + " points from **"  + USERNAME  + "**!";
