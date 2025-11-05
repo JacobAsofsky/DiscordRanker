@@ -51,14 +51,15 @@ class GameInstance
 }
 
     async handleRankings(interaction) {
-        let offset = 1;
+        var offset = interaction.options.getInteger('page');
+        if(!offset) offset = 1;
         const rows = await this.getLeaderboard(interaction.guildId, 10, 10 * (offset-1)); // top 10
         if (!rows.length) return interaction.reply('No scores yet.');
         let totalPages = Math.ceil(rows.length / 10);
         const lines = rows.map((r, i) =>`${this.getRankingTitle(i)} **${r.USERNAME}**: ${r.POINTS}`);
         await interaction.reply({
             embeds: [{
-            title: `🏆 LEADERBOARD 🏆 (Page ${offset}/${totalPages})`,
+            title: `🏆 LEADERBOARD 🏆 (Page ${offset})`,
             description: lines.join('\n'),
             color: 0xF1C40F
         }]
