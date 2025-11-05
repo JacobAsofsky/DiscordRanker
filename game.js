@@ -97,6 +97,7 @@ class GameInstance
         if(!USERNAME) USERNAME = userOption.username;
         if(giveOrTake) points *= -1;
         let pointStr = await this.changePlayerPoints(interaction, targetUserID, USERNAME , points);
+        if(amountOption > 10) amountOption = 10;
         let outStr = "Giving **" + USERNAME  + "** " + amountOption + " points!";
         if(giveOrTake) outStr = "Taking " + amountOption + " points from **"  + USERNAME  + "**!";
         outStr += "   "  + pointStr;
