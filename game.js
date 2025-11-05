@@ -17,6 +17,94 @@ CREATE TABLE IF NOT EXISTS points (
 );
 `);
 
+db.exec(`
+CREATE TABLE IF NOT EXISTS words (
+  WORD_ID INTEGER PRIMARY KEY AUTOINCREMENT,
+  WORD TEXT UNIQUE NOT NULL
+);
+`);
+
+db.exec(`
+CREATE TABLE IF NOT EXISTS word_counts (
+  SERVER  TEXT NOT NULL,
+  USER_ID INTEGER NOT NULL,
+  WORD_ID INTEGER NOT NULL,
+  COUNT   INTEGER NOT NULL DEFAULT 0,
+  PRIMARY KEY (SERVER, USER_ID, WORD_ID),
+  FOREIGN KEY (USER_ID, SERVER) REFERENCES points(USER_ID, SERVER),
+  FOREIGN KEY (WORD_ID) REFERENCES words(WORD_ID)
+);
+`);
+
+
+
+
+//Helpful indexes for performance
+db.exec(`CREATE INDEX IF NOT EXISTS idx_wordcounts_word  ON word_counts(WORD_ID);`);
+db.exec(`CREATE INDEX IF NOT EXISTS idx_wordcounts_user  ON word_counts(SERVER, USER_ID);`);
+
+
+bad_words = [
+    "fuck",
+    "shit",
+    "ass",
+    "bitch",
+    "whore",
+    "cunt",
+    "slut",
+    "dick",
+    "crap",
+    "cock",
+    "fag",
+    "faggot",
+    "nigger",
+    "nigga",
+    "douche",
+    "pussy",
+    "tits",
+    "cum",
+    "wetback",
+    "spic",
+    "kike",
+    "chink",
+    "beaner",
+    "jigaboo",
+    "gook",
+    "coon",
+    "dyke",
+    "cuck",
+    "jizz",
+    "dildo",
+    "blowjob",
+    "piss"
+]
+
+
+const stmt = db.prepare(`INSERT OR IGNORE INTO words (WORD) VALUES (?)`);
+db.transaction(() => {
+  for (const w of bad_words) {
+    stmt.run(w.toLowerCase());
+  }
+})();
+
+const wordMap = db.prepare('SELECT WORD FROM words').all().map(r => r.WORD);
+const pattern = `\\b(${wordMap.sort((a,b) => b.length - a.length).join('|')})\\b`;
+const wordRegex = new RegExp(pattern, 'gi');
+
+function findBadWords(msgContent) {
+  const found = [];
+  const seen = new Set();
+  let match;
+  while ((match = wordRegex.exec(msgContent)) !== null) {
+    const word = match[1].toLowerCase();
+    if (!seen.has(word)) {
+      seen.add(word);
+      found.push(word);
+    }
+  }
+  return found;
+}
+
 class GameInstance
 {
     constructor(guild)
@@ -160,6 +248,42 @@ class GameInstance
             if (position === 2) return '🥉';
             return `${position+1}.`;
     }
+
+    logSwears(message) {
+        let swearList = findBadWords(message);
+        if(swearList.length == 0) {
+            return;
+        }
+        let userId = getRawID(message.author.id);
+        let serverId = message.guild.id;
+        let username = message.author.globalName;   
+        if(!username) username = message.author.username;
+        console.log(`User ${message.author.id} used bad words: ${swearList.join(', ')}`);
+
+
+        
+
+        /*
+        const insertPoints = db.prepare(`
+            INSERT OR IGNORE INTO points (USER_ID, SERVER, USERNAME)
+            VALUES (?, ?, ?)
+        `);
+
+        const upsertCount = db.prepare(`
+            INSERT INTO word_counts (SERVER, USER_ID, WORD_ID, COUNT)
+            VALUES (?, ?, ?, 1)
+            ON CONFLICT(SERVER, USER_ID, WORD_ID)
+            DO UPDATE SET COUNT = COUNT + 1
+        `);
+        const trx = db.transaction(() => {
+            insertPoints.run(userId, serverId, username);
+            for (const word of swearList) {
+                upsertCount.run(serverId, userId, wordMap[word]);
+            }
+        });
+    trx();*/
+    }
+
 
 //SQL METHODS==================================================
 async getPoints(userId, serverId) {

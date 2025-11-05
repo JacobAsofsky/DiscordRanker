@@ -1,9 +1,9 @@
 require('dotenv').config();
 
+
 const g_gameMap = new Map();
 const { Client, GatewayIntentBits } = require('discord.js');
 const Game = require('./game.js');
-
 let bot_token = process.env.DISCORD_TOKEN;
 
 // Create a new client instance
@@ -51,7 +51,6 @@ function onStart()
     newGameInstance.configure(client)
     g_gameMap.set(guild.id, newGameInstance)
     });
-    
 }
 
 function tick()
@@ -66,7 +65,18 @@ function GetActiveServer(guildID)
 
 client.on('messageCreate', message => {
   if (message.author.bot) return;
-  processMessage(message);
+
+  let activeServer = GetActiveServer(message.guild.id);
+    if(!activeServer) {
+          console.log("Server not found!");
+          return;
+      } 
+    if(!activeServer.isInstanceValid()) {
+      return;
+    } 
+
+    activeServer.logSwears(message);
+    processMessage(message);
 })
 
 function processMessage(message) {
